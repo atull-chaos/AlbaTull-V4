@@ -192,9 +192,14 @@ videoCellIndices.forEach(pos => { videoCellMap.set(pos, vIdx++); });
     </div>
   </div>
 
-  <!-- Pass all thumbnail URLs to JavaScript for cycling -->
-  <script define:vars={{ allThumbs }}>
+  <!-- Pass all photo data to JavaScript for cycling -->
+  <script define:vars={{ allThumbs, photos }}>
     window.__mosaicThumbs = allThumbs;
+    // Map thumbnail URL → slug so crossfade can update href
+    window.__thumbToSlug = {};
+    photos.forEach(p => {
+      if (p.thumb) window.__thumbToSlug[p.thumb] = p.slug;
+    });
   </script>
 
   <script>
@@ -224,6 +229,8 @@ videoCellIndices.forEach(pos => { videoCellMap.set(pos, vIdx++); });
         return url;
       }
 
+      const thumbToSlug = window.__thumbToSlug || {};
+
       function crossfadeCell(cell) {
         const current = cell.querySelector('.mosaic-current');
         const next = cell.querySelector('.mosaic-next');
@@ -242,6 +249,11 @@ videoCellIndices.forEach(pos => { videoCellMap.set(pos, vIdx++); });
             next.classList.remove('is-visible');
             next.src = '';
             cellUrls.set(cell, newUrl);
+            // Update the link href to match the new photo
+            if (cell.tagName === 'A') {
+              const slug = thumbToSlug[newUrl];
+              if (slug) cell.href = `/photo/${slug}/`;
+            }
           }, 1600);
         };
 
@@ -260,17 +272,21 @@ videoCellIndices.forEach(pos => { videoCellMap.set(pos, vIdx++); });
       }, 3000);
     }
 
-    // On mobile: first tap reveals color, second tap navigates
-    document.querySelectorAll('a.mosaic-cell').forEach(cell => {
-      cell.addEventListener('click', (e) => {
-        if (!cell.classList.contains('is-active')) {
-          e.preventDefault();
-          document.querySelectorAll('.mosaic-cell.is-active').forEach(c => {
-            if (c !== cell) c.classList.remove('is-active');
-          });
-          cell.classList.add('is-active');
-        }
+    // On touch devices: first tap reveals color, second tap navigates
+    // On desktop: hover reveals color, click navigates immediately
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) {
+      document.querySelectorAll('a.mosaic-cell').forEach(cell => {
+        cell.addEventListener('click', (e) => {
+          if (!cell.classList.contains('is-active')) {
+            e.preventDefault();
+            document.querySelectorAll('.mosaic-cell.is-active').forEach(c => {
+              if (c !== cell) c.classList.remove('is-active');
+            });
+            cell.classList.add('is-active');
+          }
+        });
       });
-    });
+    }
   </script>
 </BaseLayout>

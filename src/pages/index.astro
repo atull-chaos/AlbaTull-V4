@@ -252,20 +252,7 @@ videoCellIndices.forEach(pos => { videoCellMap.set(pos, vIdx++); });
     }
 
     // On touch devices: first tap reveals color, second tap navigates
-    // On desktop: hover reveals color, click navigates immediately
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (isTouchDevice) {
-      document.querySelectorAll('a.mosaic-cell').forEach(cell => {
-        cell.addEventListener('click', (e) => {
-          if (!cell.classList.contains('is-active')) {
-            e.preventDefault();
-            document.querySelectorAll('.mosaic-cell.is-active').forEach(c => {
-              if (c !== cell) c.classList.remove('is-active');
-            });
-            cell.classList.add('is-active');
-          }
-        });
-      });
-    }
+    // All devices: single click/tap navigates directly to photo
+    // No two-tap behavior — mosaic cells are links, tap goes straight to the photo page
   </script>
 </BaseLayout>

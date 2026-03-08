@@ -1,0 +1,153 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { fetchAllWithCache, urlFor } from '../lib/sanity.js';
+import { getCategories as getLocalCategories } from '../data/photos.js';
+
+// ── Fetch categories from Sanity → Cache → Local ────────────────
+let categories = [];
+
+const { categories: rawCats, source } = await fetchAllWithCache();
+
+if ((source === 'sanity' || source === 'cache') && rawCats && rawCats.length > 0) {
+  categories = rawCats.map(c => ({
+    name:        c.name,
+    slug:        c.slug,
+    description: c.description || '',
+    archetype:   c.archetype || '',
+    archetypeDescription: c.archetypeDescription || '',
+    count:       c.photoCount || 0,
+    photos:      (c.previewPhotos || [])
+      .filter(p => p.image)
+      .map(p => ({
+        title: p.title || 'Untitled',
+        slug:  p.slug,
+        img:   urlFor(p.image).width(500).height(600).quality(80).auto('format').url()
+      }))
+  }));
+} else {
+  const localCats = getLocalCategories();
+  categories = localCats.map(c => ({
+    name: c.name,
+    slug: c.slug,
+    description: '',
+    archetype: '',
+    archetypeDescription: '',
+    count: c.count || 0,
+    photos: []
+  }));
+}
+
+// Total artwork count
+const totalCount = categories.reduce((sum, c) => sum + c.count, 0);
+---
+
+<BaseLayout title="Collections — Alba Tull">
+  <div class="collections-page">
+    <div class="collections-header">
+      <a class="collections-back" href="/">&larr; Home</a>
+      <h1 class="collections-title">The Collection</h1>
+      <p class="collections-subtitle">{totalCount} Artworks across {categories.length} Collections</p>
+    </div>
+
+    <div class="collections-list">
+      {categories.map(cat => (
+        <div class="collection-row">
+          <div class="collection-info">
+            <div class="collection-info-left">
+              {cat.archetype && (
+                <div class="collection-archetype">Archetype</div>
+              )}
+              <h2 class="collection-name">
+                <a href={`/category/${cat.slug}/`}>
+                  {cat.archetype || cat.name}
+                </a>
+                <span class="collection-count">{cat.count}</span>
+              </h2>
+            </div>
+            <div class="collection-info-right">
+              <p class="collection-tagline">
+                {cat.archetypeDescription || cat.description || `${cat.count} photographs in this collection.`}
+              </p>
+            </div>
+          </div>
+
+          <div class="collection-strip">
+            {cat.photos.map(photo => (
+              <a
+                class="collection-thumb"
+                href={`/photo/${photo.slug}/`}
+                data-overlay-link
+                data-kind="photo"
+                data-still={photo.img}
+              >
+                <img src={photo.img} alt={photo.title} loading="lazy" decoding="async" />
+              </a>
+            ))}
+            {cat.photos.length === 0 && (
+              <div class="collection-empty">Photos loading from Sanity...</div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Grid view — photos grouped by category in compact tiles -->
+    <div class="collections-grid-view" style="display:none;">
+      {categories.map(cat => (
+        <div class="grid-category-section">
+          <div class="grid-category-header">
+            <h3 class="grid-category-name">
+              <a href={`/category/${cat.slug}/`}>{cat.name}</a>
+              <span class="collection-count">{cat.count}</span>
+            </h3>
+          </div>
+          <div class="grid-category-photos">
+            {cat.photos.map(photo => (
+              <a class="grid-small-tile" href={`/photo/${photo.slug}/`}>
+                <img src={photo.img} alt={photo.title} loading="lazy" decoding="async" />
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- View toggle -->
+    <div class="view-toggle">
+      <button class="view-toggle-btn view-toggle-active" id="canvasBtn">Canvas</button>
+      <button class="view-toggle-btn" id="gridBtn">Grid</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var canvasBtn = document.getElementById('canvasBtn');
+      var gridBtn = document.getElementById('gridBtn');
+      var canvasView = document.querySelector('.collections-list');
+      var gridView = document.querySelector('.collections-grid-view');
+      if (!canvasBtn || !gridBtn || !canvasView || !gridView) return;
+
+      function showCanvas() {
+        canvasView.style.display = '';
+        gridView.style.display = 'none';
+        canvasBtn.classList.add('view-toggle-active');
+        gridBtn.classList.remove('view-toggle-active');
+      }
+
+      function showGrid() {
+        canvasView.style.display = 'none';
+        gridView.style.display = '';
+        gridBtn.classList.add('view-toggle-active');
+        canvasBtn.classList.remove('view-toggle-active');
+      }
+
+      canvasBtn.addEventListener('click', showCanvas);
+      gridBtn.addEventListener('click', showGrid);
+
+      // Check URL for ?view=grid
+      if (window.location.search.indexOf('view=grid') !== -1) {
+        showGrid();
+      }
+    })();
+  </script>
+</BaseLayout>

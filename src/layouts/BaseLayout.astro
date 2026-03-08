@@ -1,0 +1,74 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const {
+  title = 'Alba Tull - Photography',
+  description = 'Photography portfolio by Alba Tull',
+  ogImage = '/og-default.jpg'
+} = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+  <meta name="description" content={description}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:image" content={ogImage}>
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/global.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+  <nav class="nav-bar">
+    <a href="/" class="nav-logo">Alba Tull</a>
+    <div class="nav-links">
+      <a href="/collections/">Gallery</a>
+      <a href="/live/">Live</a>
+      <a href="/category/architecture-and-landscapes/">Places</a>
+      <a href="/category/celebrities/">People</a>
+      <a href="/category/botanical/">Experimentations</a>
+      <a href="/category/misc/">Archives</a>
+      <a href="/about/">About</a>
+    </div>
+    <button class="nav-mobile-toggle" aria-label="Toggle menu" id="navToggle">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <main>
+    <slot />
+  </main>
+
+  <!-- Stage Overlay (global, lives on every page) -->
+  <div id="stage-overlay" class="stage-overlay" aria-hidden="true">
+    <div class="stage-backdrop" data-overlay-close></div>
+    <div class="stage-card" role="dialog" aria-modal="true">
+      <button class="stage-close" type="button" data-overlay-close aria-label="Close">&times;</button>
+      <div class="stage-body" data-overlay-body></div>
+    </div>
+  </div>
+
+  <script type="module" src="/scripts/main.js"></script>
+  <script>
+    // Mobile nav toggle
+    const toggle = document.getElementById('navToggle');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        document.querySelector('.nav-links').classList.toggle('is-open');
+        toggle.classList.toggle('is-open');
+      });
+    }
+  </script>
+</body>
+</html>

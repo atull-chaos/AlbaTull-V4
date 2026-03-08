@@ -213,6 +213,9 @@ a.mosaic-cell {
   border: 4px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
   z-index: 6;
+  /* Desktop: center of 6×5 grid — spans cols 3-4, rows 2-4 */
+  grid-column: 3 / 5;
+  grid-row: 2 / 5;
 }
 
 .featured-link {
@@ -1501,6 +1504,17 @@ a.mosaic-cell {
   .hero-featured img {
     max-height: none;
   }
+  /* Tablet: 4 columns for mosaic */
+  .mosaic-grid-full {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    gap: 2px;
+    padding: 2px;
+  }
+  .mosaic-featured-cell {
+    grid-column: 2 / 4 !important;
+    grid-row: 2 / 5 !important;
+  }
   .detail-layout {
     flex-direction: column;
   }
@@ -1779,22 +1793,42 @@ a.mosaic-cell {
   .home-layout::after {
     display: none;
   }
-  /* Full-page mosaic: switch to 3 columns on mobile */
+  /* Full-page mosaic: 3 columns on mobile, fill viewport */
+  .mosaic-fullpage {
+    height: calc(100vh - 56px);
+    height: calc(100dvh - 56px); /* dynamic viewport height for mobile browsers */
+  }
   .mosaic-grid-full {
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto;
+    grid-template-rows: repeat(8, 1fr);
     gap: 2px;
     padding: 2px;
   }
+  /* Featured photo: span full width, 2 rows tall */
   .mosaic-featured-cell {
     grid-column: 1 / 4 !important;
-    grid-row: 2 / 4 !important;
+    grid-row: 3 / 5 !important;
   }
   .mosaic-branding {
     padding: 30px 16px 16px;
   }
   .mosaic-brand-name {
     font-size: 24px;
+    letter-spacing: 1px;
+  }
+  .mosaic-brand-sub {
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
+  .mosaic-brand-meta {
+    font-size: 10px;
+    gap: 16px;
+  }
+  .featured-title {
+    font-size: 14px;
+  }
+  .featured-label {
+    font-size: 7px;
   }
 }
 

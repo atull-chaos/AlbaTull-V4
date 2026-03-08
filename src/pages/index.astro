@@ -72,38 +72,22 @@ function shuffle(arr) {
 
 const shuffledPhotos = shuffle(photos);
 
-// Grid: 6 columns × 5 rows = 30 cells
-// Featured photo occupies the center: columns 3-4, rows 2-4 (a 2×3 block)
-// That's grid positions: row2col3, row2col4, row3col3, row3col4, row4col3, row4col4
-const COLS = 6;
-const ROWS = 5;
-const GRID_CELLS = COLS * ROWS;
+// Grid fills viewport — enough cells to cover all breakpoints
+// Desktop: 6 cols × 5 rows = 30, Tablet: 4×6 = 24, Mobile: 3×8 = 24
+const GRID_CELLS = 30;
 
-// Calculate which grid positions the featured block occupies
-// Center block: cols 3-4 (0-indexed: 2-3), rows 2-4 (0-indexed: 1-3)
-const featuredPositions = new Set();
-for (let r = 1; r <= 3; r++) {
-  for (let c = 2; c <= 3; c++) {
-    featuredPositions.add(r * COLS + c);
-  }
-}
-
-// Fill non-featured cells with photos
+// Fill ALL cells with photos (featured overlays via CSS grid placement)
 const mosaicPhotos = [];
-let photoIdx = 0;
 for (let i = 0; i < GRID_CELLS; i++) {
-  if (featuredPositions.has(i)) {
-    mosaicPhotos.push(null); // placeholder for featured block
-  } else {
-    mosaicPhotos.push(shuffledPhotos[photoIdx % shuffledPhotos.length]);
-    photoIdx++;
-  }
+  mosaicPhotos.push(shuffledPhotos[i % shuffledPhotos.length]);
 }
+
+// Featured positions not needed — featured cell is a separate grid item
 
 // All thumbnail URLs for JavaScript to cycle through
 const allThumbs = photos.map(p => p.thumb).filter(Boolean);
 
-// Video cells — 3 random positions (not in featured block)
+// Video cells — 3 random positions among the grid cells
 const mosaicVideos = [
   'https://videos.pexels.com/video-files/3864103/3864103-hd_1920_1080_30fps.mp4',
   'https://videos.pexels.com/video-files/856974/856974-hd_1920_1080_30fps.mp4',
@@ -112,7 +96,7 @@ const mosaicVideos = [
 
 const availableForVideo = [];
 for (let i = 0; i < GRID_CELLS; i++) {
-  if (!featuredPositions.has(i)) availableForVideo.push(i);
+  availableForVideo.push(i);
 }
 const videoShuffled = shuffle(availableForVideo);
 const videoCellIndices = new Set(videoShuffled.slice(0, mosaicVideos.length));
@@ -124,30 +108,25 @@ videoCellIndices.forEach(pos => { videoCellMap.set(pos, vIdx++); });
 <BaseLayout title="Alba Tull - Photography Portfolio">
   <div class="mosaic-fullpage">
     <div class="mosaic-grid-full" id="mosaicGrid">
-      {mosaicPhotos.map((p, i) => {
-        // Featured block — only render once at the first position
-        if (featuredPositions.has(i)) {
-          if (i === 1 * COLS + 2) {
-            // First cell of featured block — render the big featured photo
-            return (
-              <div class="mosaic-featured-cell" style={`grid-column: 3 / 5; grid-row: 2 / 5;`}>
-                <a href={featuredPhoto?.slug ? `/photo/${featuredPhoto.slug}/` : '#'} class="featured-link">
-                  <img
-                    src={featuredPhoto?.img}
-                    alt={featuredPhoto?.title}
-                    class="featured-center-img"
-                  />
-                  <div class="featured-overlay">
-                    <div class="featured-label">Featured</div>
-                    <div class="featured-title">{featuredPhoto?.title}</div>
-                  </div>
-                </a>
-              </div>
-            );
-          }
-          return null; // other cells in featured block — skip (spanned by CSS grid)
-        }
+      {/* Featured photo — separate grid item, positioned via CSS */}
+      {featuredPhoto && (
+        <div class="mosaic-featured-cell">
+          <a href={featuredPhoto.slug ? `/photo/${featuredPhoto.slug}/` : '#'} class="featured-link">
+            <img
+              src={featuredPhoto.img}
+              alt={featuredPhoto.title}
+              class="featured-center-img"
+            />
+            <div class="featured-overlay">
+              <div class="featured-label">Featured</div>
+              <div class="featured-title">{featuredPhoto.title}</div>
+            </div>
+          </a>
+        </div>
+      )}
 
+      {/* All mosaic cells — photos and videos fill every position */}
+      {mosaicPhotos.map((p, i) => {
         const videoIndex = videoCellMap.get(i);
         const isVideo = videoIndex !== undefined;
 

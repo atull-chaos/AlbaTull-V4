@@ -725,15 +725,16 @@ a.mosaic-cell {
   flex: 0 0 58%;
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   background: #f0efec;
+  min-height: calc(100vh - 56px);
 }
 
 .detail-hero img {
   width: 100%;
-  height: calc(100vh - 56px);
-  object-fit: cover;
-  object-position: center center;
+  max-height: calc(100vh - 56px);
+  object-fit: contain;
   display: block;
 }
 

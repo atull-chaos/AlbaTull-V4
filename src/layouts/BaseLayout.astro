@@ -59,6 +59,11 @@ const {
     </div>
   </div>
 
+  <!-- Copyright footer -->
+  <footer class="site-footer">
+    <p>&copy; {new Date().getFullYear()} Alba Tull. All rights reserved. All images on this site are protected by copyright law. Unauthorized use, reproduction, or distribution is strictly prohibited.</p>
+  </footer>
+
   <script type="module" src="/scripts/main.js"></script>
   <script>
     // Mobile nav toggle
@@ -69,6 +74,36 @@ const {
         toggle.classList.toggle('is-open');
       });
     }
+
+    // ── Image Protection ──────────────────────────────────────────
+    // Disable right-click on images
+    document.addEventListener('contextmenu', function(e) {
+      if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO' || e.target.closest('.mosaic-cell') || e.target.closest('.detail-hero') || e.target.closest('.grid-tile')) {
+        e.preventDefault();
+      }
+    });
+
+    // Disable image dragging
+    document.addEventListener('dragstart', function(e) {
+      if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
+        e.preventDefault();
+      }
+    });
+
+    // Disable long-press save on mobile (iOS/Android)
+    document.addEventListener('touchstart', function(e) {
+      if (e.target.tagName === 'IMG') {
+        e.target.style.webkitTouchCallout = 'none';
+      }
+    }, { passive: true });
+
+    // Disable keyboard shortcuts for saving images (Ctrl+S, Ctrl+Shift+I)
+    document.addEventListener('keydown', function(e) {
+      // Block Ctrl+S (save page)
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+      }
+    });
   </script>
 </body>
 </html>

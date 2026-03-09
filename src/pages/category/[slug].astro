@@ -40,7 +40,7 @@ if (source === 'cache') {
           id:    p._id,
           title: p.title || 'Untitled',
           slug:  p.slug || p._id,
-          img:   urlFor(p.image).width(800).quality(80).auto('format').url(),
+          img:   urlFor(p.image).width(600).quality(65).auto('format').url(),
           desc:  p.description || '',
           cat:   p.category?.name || categoryName
         }));
@@ -55,7 +55,7 @@ if (source === 'cache') {
       id:    p._id,
       title: p.title || 'Untitled',
       slug:  p.slug || p._id,
-      img:   p.image ? urlFor(p.image).width(800).quality(80).auto('format').url() : '',
+      img:   p.image ? urlFor(p.image).width(600).quality(65).auto('format').url() : '',
       desc:  p.description || '',
       cat:   p.category?.name || categoryName
     })).filter(p => p.img);

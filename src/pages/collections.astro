@@ -21,7 +21,7 @@ if ((source === 'sanity' || source === 'cache') && rawCats && rawCats.length > 0
       .map(p => ({
         title: p.title || 'Untitled',
         slug:  p.slug,
-        img:   urlFor(p.image).width(500).height(600).quality(80).auto('format').url()
+        img:   urlFor(p.image).width(400).height(500).quality(60).auto('format').url()
       }))
   }));
 } else {

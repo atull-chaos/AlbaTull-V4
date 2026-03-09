@@ -42,7 +42,7 @@ if (source === 'cache') {
         id:    cached._id,
         title: cached.title || 'Untitled',
         slug:  cached.slug,
-        img:   urlFor(cached.image).width(1400).quality(85).auto('format').url(),
+        img:   urlFor(cached.image).width(900).quality(65).auto('format').url(),
         desc:  cached.description || '',
         cat:   cached.category?.name || 'Uncategorized',
         audio: cached.audio?.asset?._ref || null
@@ -61,7 +61,7 @@ if (source === 'cache') {
         id:    sp._id,
         title: sp.title || 'Untitled',
         slug:  sp.slug,
-        img:   urlFor(sp.image).width(1400).quality(85).auto('format').url(),
+        img:   urlFor(sp.image).width(900).quality(65).auto('format').url(),
         desc:  sp.description || '',
         cat:   sp.category?.name || 'Uncategorized',
         audio: sp.audio?.asset?._ref || null
@@ -168,7 +168,8 @@ const detailsString = detailParts.length > 0 ? detailParts.join('. ') + '.' : ''
   <BaseLayout title={`${photo.title} — Alba Tull`} description={photo.desc} ogImage={photo.img}>
     <div class="detail-layout">
       <div class="detail-hero">
-        <img src={photo.img} alt={photo.title} data-hero-img />
+        <canvas id="heroCanvas" data-src={photo.img} data-alt={photo.title}></canvas>
+        <noscript><img src={photo.img} alt={photo.title} /></noscript>
       </div>
       <div class="detail-sidebar">
         <a class="detail-back" href={`/category/${categorySlug}/`}>&larr; Back to {photo.cat}</a>
@@ -216,5 +217,65 @@ const detailsString = detailParts.length > 0 ? detailParts.join('. ') + '.' : ''
         )}
       </div>
     </div>
+
+    <!-- Canvas watermark: burns "ALBA TULL" into the image pixels -->
+    <script>
+      (function() {
+        const canvas = document.getElementById('heroCanvas');
+        if (!canvas) return;
+        const src = canvas.dataset.src;
+        const alt = canvas.dataset.alt || '';
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          // Size canvas to image
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+
+          // Draw the photo
+          ctx.drawImage(img, 0, 0);
+
+          // Burn repeating watermark into pixels
+          ctx.save();
+          ctx.globalAlpha = 0.07;
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 28px Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.rotate(-25 * Math.PI / 180);
+
+          // Tile the watermark across the entire image
+          const text = 'ALBA TULL  \u00A9';
+          const stepX = 320;
+          const stepY = 160;
+          for (let y = -canvas.height; y < canvas.height * 2; y += stepY) {
+            for (let x = -canvas.width; x < canvas.width * 2; x += stepX) {
+              ctx.fillText(text, x, y);
+            }
+          }
+          ctx.restore();
+
+          // Also add a single stronger watermark in the bottom-right corner
+          ctx.save();
+          ctx.globalAlpha = 0.15;
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 20px Arial, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText('\u00A9 Alba Tull', canvas.width - 20, canvas.height - 16);
+          ctx.restore();
+        };
+        img.onerror = function() {
+          // Fallback: show regular img if canvas fails (e.g. CORS)
+          const fallback = document.createElement('img');
+          fallback.src = src;
+          fallback.alt = alt;
+          fallback.setAttribute('data-hero-img', '');
+          canvas.parentNode.replaceChild(fallback, canvas);
+        };
+        img.src = src;
+      })();
+    </script>
   </BaseLayout>
 )}

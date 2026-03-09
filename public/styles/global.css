@@ -731,10 +731,9 @@ a.mosaic-cell {
 
 .detail-hero img {
   width: 100%;
-  height: auto;
-  min-height: calc(100vh - 56px);
-  object-fit: contain;
-  object-position: center top;
+  height: calc(100vh - 56px);
+  object-fit: cover;
+  object-position: center center;
   display: block;
 }
 
@@ -1843,32 +1842,20 @@ a.mosaic-cell {
 }
 
 /* ============================================
-   Image Protection — Anti-Copy Measures
+   Image Protection — Invisible Anti-Copy Shield
    ============================================ */
 
-/* Disable selection/highlighting on all images */
+/* Disable selection/highlighting and dragging on all images */
 img, video {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
   -webkit-user-drag: none;
-  pointer-events: none; /* Images can't be targeted — clicks pass to overlay */
   -webkit-touch-callout: none;
 }
 
-/* Re-enable pointer events on clickable containers */
-a, .mosaic-cell, .grid-tile, .collection-thumb, .related-item, .featured-link {
-  pointer-events: auto;
-}
-
-/* ── Repeating watermark pattern ─────────────────────────────────
-   Semi-transparent diagonal "ALBA TULL" text burned into every image
-   area. Appears in screenshots and can't be separated from the photo.
-   Uses an inline SVG as a repeating background pattern.
-   ────────────────────────────────────────────────────────────── */
-
-/* Watermark overlay — repeating diagonal text pattern */
+/* Invisible shield over images — blocks "Save Image As" on right-click */
 .detail-hero::after,
 .grid-tile::after,
 .collection-thumb::after,
@@ -1877,16 +1864,7 @@ a, .mosaic-cell, .grid-tile, .collection-thumb, .related-item, .featured-link {
   position: absolute;
   inset: 0;
   z-index: 10;
-  pointer-events: auto; /* This layer receives right-clicks, not the image */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='140'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-size='14' font-weight='600' letter-spacing='4' fill='rgba(255,255,255,0.08)' transform='rotate(-25 140 70)'%3EALBA TULL%3C/text%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 280px 140px;
-}
-
-/* Stronger watermark on the detail/hero page (larger image, more tempting to steal) */
-.detail-hero::after {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='160'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-size='16' font-weight='700' letter-spacing='5' fill='rgba(255,255,255,0.12)' transform='rotate(-25 160 80)'%3EALBA TULL %C2%A9%3C/text%3E%3C/svg%3E");
-  background-size: 320px 160px;
+  background: transparent;
 }
 
 /* Copyright Footer */

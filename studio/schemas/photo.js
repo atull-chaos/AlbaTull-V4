@@ -30,11 +30,18 @@ export default defineType({
     }),
     defineField({
       name: 'category',
-      title: 'Category',
+      title: 'Primary Category',
       type: 'reference',
       to: [{ type: 'category' }],
-      description: 'Which collection this photo belongs to',
+      description: 'Primary collection this photo belongs to',
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'additionalCategories',
+      title: 'Additional Categories',
+      type: 'array',
+      of: [{ type: 'reference', to: [{ type: 'category' }] }],
+      description: 'Other collections this photo also appears in (e.g. a celebrity photo that also appears in Commercial)',
     }),
     defineField({
       name: 'description',

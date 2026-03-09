@@ -1,11 +1,13 @@
 /**
- * Sanity CMS Client — Alba Tull Portfolio
+ * Sanity CMS Client — Alba Tull Portfolio V5
  *
  * Provides read access to the Sanity dataset for photos, categories,
- * and site settings. Falls back to build cache → local data when Sanity
- * is unavailable (e.g. during local dev without tokens).
+ * and site settings. Supports parent/child category hierarchy and
+ * multi-category photo assignments.
  *
- * Data priority:  1) Live Sanity API  →  2) Build cache (.sanity-cache.json)  →  3) Local photos.js
+ * Falls back to build cache → local data when Sanity is unavailable.
+ *
+ * Data priority:  1) Live Sanity API  →  2) Build cache  →  3) Local photos.js
  */
 import { createClient } from '@sanity/client';
 import imageUrlBuilder from '@sanity/image-url';
@@ -17,9 +19,9 @@ export const client = createClient({
   dataset:   import.meta.env.SANITY_DATASET   || 'production',
   apiVersion: import.meta.env.SANITY_API_VERSION || '2024-01-01',
   token:     import.meta.env.SANITY_READ_TOKEN || '',
-  useCdn:    true,   // edge-cached reads (fast)
+  useCdn:    true,
   requestTagPrefix: 'astro',
-  timeout:   5000,   // 5s timeout — fail fast, fall back to cache
+  timeout:   5000,
 });
 
 // ── Image URL Builder ──────────────────────────────────────────────
@@ -37,8 +39,7 @@ export function urlFor(source) {
 
 /**
  * Fetch all photos, ordered by category then title.
- * Returns: { _id, title, slug, description, category->{name,slug},
- *            image, audio, video, featured, metadata }
+ * Includes primary category + additionalCategories for multi-category support.
  */
 export async function getAllPhotos() {
   return client.fetch(`
@@ -47,7 +48,8 @@ export async function getAllPhotos() {
       title,
       "slug": slug.current,
       description,
-      category->{name, "slug": slug.current},
+      category->{_id, name, "slug": slug.current},
+      "additionalCategories": additionalCategories[]->{_id, name, "slug": slug.current},
       image,
       audio,
       video,
@@ -58,7 +60,7 @@ export async function getAllPhotos() {
 }
 
 /**
- * Fetch a single photo by its slug.
+ * Fetch a single photo by its slug, with related photos from same category.
  */
 export async function getPhotoBySlug(slug) {
   return client.fetch(`
@@ -67,7 +69,8 @@ export async function getPhotoBySlug(slug) {
       title,
       "slug": slug.current,
       description,
-      category->{name, "slug": slug.current},
+      category->{_id, name, "slug": slug.current},
+      "additionalCategories": additionalCategories[]->{_id, name, "slug": slug.current},
       image,
       audio,
       video,
@@ -81,7 +84,8 @@ export async function getPhotoBySlug(slug) {
 }
 
 /**
- * Fetch all categories with photo count.
+ * Fetch all categories with hierarchy info, photo counts, and previews.
+ * Includes parent reference, children sub-query, and combined photo counts.
  */
 export async function getAllCategories() {
   return client.fetch(`
@@ -94,8 +98,14 @@ export async function getAllCategories() {
       archetype,
       archetypeDescription,
       order,
-      "photoCount": count(*[_type == "photo" && category._ref == ^._id]),
-      "previewPhotos": *[_type == "photo" && category._ref == ^._id] | order(title asc) [0...8] {
+      "isParent": coalesce(isParent, false),
+      "parentCategory": parentCategory->{_id, name, "slug": slug.current},
+      "children": *[_type == "category" && parentCategory._ref == ^._id] | order(order asc, name asc) {
+        _id, name, "slug": slug.current, order,
+        "photoCount": count(*[_type == "photo" && (category._ref == ^._id || ^._id in additionalCategories[]._ref)])
+      },
+      "photoCount": count(*[_type == "photo" && (category._ref == ^._id || ^._id in additionalCategories[]._ref)]),
+      "previewPhotos": *[_type == "photo" && (category._ref == ^._id || ^._id in additionalCategories[]._ref)] | order(title asc) [0...8] {
         _id, title, "slug": slug.current, image
       }
     }
@@ -103,11 +113,15 @@ export async function getAllCategories() {
 }
 
 /**
- * Fetch all photos in a given category (by slug).
+ * Fetch photos for a specific category (by slug).
+ * Matches both primary category and additionalCategories.
  */
 export async function getPhotosByCategory(categorySlug) {
   return client.fetch(`
-    *[_type == "photo" && category->slug.current == $categorySlug] | order(title asc) {
+    *[_type == "photo" && (
+      category->slug.current == $categorySlug ||
+      $categorySlug in additionalCategories[]->slug.current
+    )] | order(title asc) {
       _id,
       title,
       "slug": slug.current,
@@ -116,9 +130,35 @@ export async function getPhotosByCategory(categorySlug) {
       audio,
       video,
       featured,
-      category->{name, "slug": slug.current}
+      category->{name, "slug": slug.current},
+      "additionalCategories": additionalCategories[]->{name, "slug": slug.current}
     }
   `, { categorySlug });
+}
+
+/**
+ * Fetch photos for a parent category (all children combined).
+ * Gets photos from all child categories of the given parent.
+ */
+export async function getPhotosByParentCategory(parentSlug) {
+  return client.fetch(`
+    *[_type == "photo" && (
+      category->parentCategory->slug.current == $parentSlug ||
+      category->slug.current == $parentSlug ||
+      $parentSlug in additionalCategories[]->parentCategory->slug.current
+    )] | order(title asc) {
+      _id,
+      title,
+      "slug": slug.current,
+      description,
+      image,
+      audio,
+      video,
+      featured,
+      category->{name, "slug": slug.current},
+      "additionalCategories": additionalCategories[]->{name, "slug": slug.current}
+    }
+  `, { parentSlug });
 }
 
 /**
@@ -138,17 +178,8 @@ export async function getFeaturedPhoto() {
 }
 
 // ── Cached Fetch Wrappers ───────────────────────────────────────
-// These try Sanity first, update cache on success, fall back to
-// cache on failure. Used by getStaticPaths() in page components.
+// Try Sanity first, update cache on success, fall back to cache on failure.
 
-/**
- * Fetch all photos + categories + featured photo with caching.
- * Returns { photos, categories, featured, source } where source
- * is 'sanity', 'cache', or 'local'.
- *
- * Uses a singleton promise so multiple page files calling this
- * during a single build share one Sanity request.
- */
 let _fetchPromise = null;
 export function fetchAllWithCache() {
   if (!_fetchPromise) {
@@ -159,7 +190,6 @@ export function fetchAllWithCache() {
 
 async function _doFetchAllWithCache() {
   // 1) Try live Sanity with a hard 8-second race timeout
-  //    (the Sanity client timeout can hang on blocked proxies)
   try {
     const sanityFetch = Promise.all([
       getAllPhotos(),
@@ -172,7 +202,6 @@ async function _doFetchAllWithCache() {
     const [photos, categories, featured] = await Promise.race([sanityFetch, hardTimeout]);
 
     if (photos && photos.length > 0) {
-      // Save to cache for next time
       writeCache({ photos, categories, featured });
       console.log(`[sanity] Live fetch: ${photos.length} photos, ${categories.length} categories`);
       return { photos, categories, featured, source: 'sanity' };

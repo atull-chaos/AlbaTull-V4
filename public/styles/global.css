@@ -40,9 +40,7 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-html.overlay-open {
-  overflow: hidden;
-}
+/* (overlay-open removed in V5) */
 
 /* ============================================
    Navigation — clean, minimal, Figma-matched
@@ -953,102 +951,57 @@ a.mosaic-cell {
 }
 
 /* ============================================
-   Stage Overlay (lightbox)
+   Subcategory Tabs
    ============================================ */
-.stage-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: none;
-  opacity: 0;
-}
-
-.stage-overlay.is-open {
-  display: block;
-  animation: fadeIn 0.3s ease forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.stage-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-
-.stage-card {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(1400px, calc(100vw - 40px));
-  height: min(900px, calc(100vh - 40px));
-  background: var(--bg-primary);
-  overflow: hidden;
-  border: 1px solid var(--border-light);
-  animation: cardSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes cardSlideUp {
-  from { opacity: 0; transform: translate(-50%, calc(-50% + 16px)); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-.stage-close {
-  position: absolute;
-  right: 20px;
-  top: 16px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  font-size: 20px;
-  color: var(--text-muted);
-  z-index: 10;
-  width: 40px;
-  height: 40px;
+.subcategory-tabs {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
+  gap: 0;
+  padding: 0 48px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--border);
 }
-.stage-close:hover {
+
+.subcategory-tab {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text-muted);
+  padding: 12px 20px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.subcategory-tab:hover {
   color: var(--text-primary);
 }
 
-.stage-body {
-  width: 100%;
-  height: 100%;
-  overflow: auto;
+.subcategory-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
 }
 
-.stage-body::-webkit-scrollbar {
-  width: 3px;
-}
-.stage-body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: 2px;
+/* Subcategory links on collections page */
+.collection-subcategories {
+  margin-top: 8px;
 }
 
-/* Detail layout inside overlay — override viewport-based sizing */
-.stage-body .detail-layout {
-  min-height: 100%;
+.collection-subcat-link {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
 }
-.stage-body .detail-hero {
-  flex: 0 0 58%;
-  position: relative;
-  background: #f0efec;
+
+.collection-subcat-link:hover {
+  color: var(--text-primary);
 }
-.stage-body .detail-hero img {
-  width: 100%;
-  height: auto;
-  max-height: 860px;
-  object-fit: contain;
-  display: block;
+
+.collection-subcat-sep {
+  color: var(--text-muted);
 }
 
 /* ============================================

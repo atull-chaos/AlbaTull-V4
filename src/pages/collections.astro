@@ -4,18 +4,25 @@ import { fetchAllWithCache, urlFor } from '../lib/sanity.js';
 import { getCategories as getLocalCategories } from '../data/photos.js';
 
 // ── Fetch categories from Sanity → Cache → Local ────────────────
-let categories = [];
+let allCategories = [];
 
 const { categories: rawCats, source } = await fetchAllWithCache();
 
 if ((source === 'sanity' || source === 'cache') && rawCats && rawCats.length > 0) {
-  categories = rawCats.map(c => ({
+  allCategories = rawCats.map(c => ({
     name:        c.name,
     slug:        c.slug,
     description: c.description || '',
     archetype:   c.archetype || '',
     archetypeDescription: c.archetypeDescription || '',
     count:       c.photoCount || 0,
+    isParent:    c.isParent || false,
+    parentCategory: c.parentCategory || null,
+    children:    (c.children || []).map(child => ({
+      name:  child.name,
+      slug:  child.slug,
+      count: child.photoCount || 0,
+    })),
     photos:      (c.previewPhotos || [])
       .filter(p => p.image)
       .map(p => ({
@@ -26,19 +33,32 @@ if ((source === 'sanity' || source === 'cache') && rawCats && rawCats.length > 0
   }));
 } else {
   const localCats = getLocalCategories();
-  categories = localCats.map(c => ({
+  allCategories = localCats.map(c => ({
     name: c.name,
     slug: c.slug,
     description: '',
     archetype: '',
     archetypeDescription: '',
     count: c.count || 0,
+    isParent: false,
+    parentCategory: null,
+    children: [],
     photos: []
   }));
 }
 
-// Total artwork count
-const totalCount = categories.reduce((sum, c) => sum + c.count, 0);
+// ── Build display list: show parent categories and standalone categories ──
+// Hide child categories from the main list (they appear as subcategories under their parent)
+const displayCategories = allCategories.filter(c => !c.parentCategory);
+
+// Total artwork count (count from top-level + standalone only, to avoid double counting)
+const totalCount = displayCategories.reduce((sum, c) => {
+  if (c.isParent && c.children.length > 0) {
+    // For parent categories, sum children counts
+    return sum + c.children.reduce((cs, child) => cs + child.count, 0);
+  }
+  return sum + c.count;
+}, 0);
 ---
 
 <BaseLayout title="Collections — Alba Tull">
@@ -46,11 +66,11 @@ const totalCount = categories.reduce((sum, c) => sum + c.count, 0);
     <div class="collections-header">
       <a class="collections-back" href="/">&larr; Home</a>
       <h1 class="collections-title">The Collection</h1>
-      <p class="collections-subtitle">{totalCount} Artworks across {categories.length} Collections</p>
+      <p class="collections-subtitle">{totalCount} Artworks across {displayCategories.length} Collections</p>
     </div>
 
     <div class="collections-list">
-      {categories.map(cat => (
+      {displayCategories.map(cat => (
         <div class="collection-row">
           <div class="collection-info">
             <div class="collection-info-left">
@@ -61,8 +81,25 @@ const totalCount = categories.reduce((sum, c) => sum + c.count, 0);
                 <a href={`/category/${cat.slug}/`}>
                   {cat.archetype || cat.name}
                 </a>
-                <span class="collection-count">{cat.count}</span>
+                <span class="collection-count">
+                  {cat.isParent && cat.children.length > 0
+                    ? cat.children.reduce((s, ch) => s + ch.count, 0)
+                    : cat.count}
+                </span>
               </h2>
+              {/* Show subcategory labels for parent categories */}
+              {cat.isParent && cat.children.length > 0 && (
+                <div class="collection-subcategories">
+                  {cat.children.map((child, i) => (
+                    <Fragment>
+                      <a href={`/category/${child.slug}/`} class="collection-subcat-link">
+                        {child.name} ({child.count})
+                      </a>
+                      {i < cat.children.length - 1 && <span class="collection-subcat-sep"> · </span>}
+                    </Fragment>
+                  ))}
+                </div>
+              )}
             </div>
             <div class="collection-info-right">
               <p class="collection-tagline">
@@ -88,9 +125,9 @@ const totalCount = categories.reduce((sum, c) => sum + c.count, 0);
       ))}
     </div>
 
-    <!-- Grid view — photos grouped by category in compact tiles -->
+    <!-- Grid view -->
     <div class="collections-grid-view" style="display:none;">
-      {categories.map(cat => (
+      {displayCategories.map(cat => (
         <div class="grid-category-section">
           <div class="grid-category-header">
             <h3 class="grid-category-name">
@@ -141,7 +178,6 @@ const totalCount = categories.reduce((sum, c) => sum + c.count, 0);
       canvasBtn.addEventListener('click', showCanvas);
       gridBtn.addEventListener('click', showGrid);
 
-      // Check URL for ?view=grid
       if (window.location.search.indexOf('view=grid') !== -1) {
         showGrid();
       }

@@ -9,7 +9,7 @@ export default defineType({
       name: 'name',
       title: 'Name',
       type: 'string',
-      description: 'Category display name (e.g. "Architecture and Landscapes")',
+      description: 'Category display name (e.g. "Sports", "Celebrity")',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -19,6 +19,20 @@ export default defineType({
       description: 'URL-friendly identifier (auto-generated from name)',
       options: { source: 'name', maxLength: 96 },
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'parentCategory',
+      title: 'Parent Category',
+      type: 'reference',
+      to: [{ type: 'category' }],
+      description: 'Leave empty for top-level categories. Set to group subcategories (e.g. "Steelers" → parent "Sports")',
+    }),
+    defineField({
+      name: 'isParent',
+      title: 'Is Parent Category?',
+      type: 'boolean',
+      description: 'Check if this is a parent category that contains subcategories (e.g. Sports, People, Places)',
+      initialValue: false,
     }),
     defineField({
       name: 'description',
@@ -71,6 +85,13 @@ export default defineType({
     { title: 'Name A–Z', name: 'nameAsc', by: [{ field: 'name', direction: 'asc' }] },
   ],
   preview: {
-    select: { title: 'name', media: 'coverImage' },
+    select: { title: 'name', subtitle: 'parentCategory.name', media: 'coverImage' },
+    prepare({ title, subtitle, media }) {
+      return {
+        title: title,
+        subtitle: subtitle ? `↳ ${subtitle}` : 'Top-level',
+        media,
+      };
+    },
   },
 });

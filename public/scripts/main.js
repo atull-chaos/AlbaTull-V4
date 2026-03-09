@@ -1,17 +1,12 @@
 /**
- * Main Bootstrap
- * Initializes all interactive modules.
+ * Main Bootstrap — V5
+ * Initializes interactive modules.
+ * No overlay system — all navigation is standard page links.
  */
 
-import { initOverlayRouter } from "./overlay-router.js";
 import { initRolodexLivePreviews } from "./rolodex-live.js";
 import { initFreezeToStillOnSelect } from "./freeze-frame.js";
-import { initPhotoOpenTransition } from "./open-photo.js";
 
-// Core systems
-initOverlayRouter();
-
-// Premium motion effects (Phase 2+)
+// Motion effects
 initRolodexLivePreviews();
 initFreezeToStillOnSelect();
-initPhotoOpenTransition();

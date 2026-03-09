@@ -152,7 +152,7 @@ const detailsString = detailParts.length > 0 ? detailParts.join('. ') + '.' : ''
             <h2 class="related-title">Related Shots</h2>
             <div class="related-grid">
               {related.map(r => (
-                <a class="related-item" href={`/photo/${r.slug}/`} data-overlay-link data-kind="photo" data-still={r.img}>
+                <a class="related-item" href={`/photo/${r.slug}/`} >
                   <img src={r.img} alt={r.title} loading="lazy" />
                 </a>
               ))}
@@ -207,7 +207,7 @@ const detailsString = detailParts.length > 0 ? detailParts.join('. ') + '.' : ''
             <h2 class="related-title">Related Shots</h2>
             <div class="related-grid">
               {related.map(r => (
-                <a class="related-item" href={`/photo/${r.slug}/`} data-overlay-link data-kind="photo" data-still={r.img}>
+                <a class="related-item" href={`/photo/${r.slug}/`} >
                   <img src={r.img} alt={r.title} loading="lazy" />
                 </a>
               ))}

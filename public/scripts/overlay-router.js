@@ -2,6 +2,11 @@
  * Overlay + Route Router
  * Opens photo/video detail in a lightbox overlay while updating the URL
  * via History API so links are shareable. Supports direct visits too.
+ *
+ * IMPORTANT: This site is built as static (output: 'static'), so the
+ * ?fragment=1 approach doesn't work — query params aren't processed at
+ * build time. Instead, we fetch the full page and extract just the
+ * .detail-layout content using DOMParser.
  */
 
 const OVERLAY_ID = "stage-overlay";
@@ -16,11 +21,24 @@ function restoreScroll(pos) {
 }
 
 async function fetchFragment(url) {
-  const u = new URL(url, window.location.origin);
-  u.searchParams.set("fragment", "1");
-  const res = await fetch(u.toString(), { headers: { "X-Overlay": "1" } });
-  if (!res.ok) throw new Error(`Failed to load ${u}`);
-  return await res.text();
+  const res = await fetch(url, { headers: { "X-Overlay": "1" } });
+  if (!res.ok) throw new Error(`Failed to load ${url}`);
+  const html = await res.text();
+
+  // Parse the full page and extract just the detail content
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  // Try to get just the detail-layout (photo hero + sidebar)
+  const detailLayout = doc.querySelector('.detail-layout');
+  if (detailLayout) return detailLayout.outerHTML;
+
+  // Fallback: get the main content area
+  const main = doc.querySelector('main');
+  if (main) return main.innerHTML;
+
+  // Last resort: return raw HTML (shouldn't happen)
+  return html;
 }
 
 export function initOverlayRouter() {
@@ -102,10 +120,8 @@ export function initOverlayRouter() {
   });
 
   // Handle direct visits to /photo/slug or /video/slug
-  const startPath = window.location.pathname;
-  if (startPath.startsWith("/photo/") || startPath.startsWith("/video/")) {
-    openOverlay(startPath + window.location.search, { push: false }).catch(console.error);
-  }
+  // For direct visits, DON'T use overlay — let the page render normally
+  // The overlay is only for SPA-style navigation from galleries/mosaic
 
   // Expose for programmatic use
   window.__overlay = { open: openOverlay, close: closeOverlay };

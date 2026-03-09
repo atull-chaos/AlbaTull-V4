@@ -724,17 +724,12 @@ a.mosaic-cell {
 .detail-hero {
   flex: 0 0 58%;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: #f0efec;
-  min-height: calc(100vh - 56px);
 }
 
 .detail-hero img {
   width: 100%;
-  max-height: calc(100vh - 56px);
-  object-fit: contain;
+  height: auto;
   display: block;
 }
 
@@ -1003,6 +998,23 @@ a.mosaic-cell {
 .stage-body::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.06);
   border-radius: 2px;
+}
+
+/* Detail layout inside overlay — override viewport-based sizing */
+.stage-body .detail-layout {
+  min-height: 100%;
+}
+.stage-body .detail-hero {
+  flex: 0 0 58%;
+  position: relative;
+  background: #f0efec;
+}
+.stage-body .detail-hero img {
+  width: 100%;
+  height: auto;
+  max-height: 860px;
+  object-fit: contain;
+  display: block;
 }
 
 /* ============================================
@@ -1523,9 +1535,8 @@ a.mosaic-cell {
     width: 100%;
   }
   .detail-hero img {
-    min-height: 50vh;
+    width: 100%;
     height: auto;
-    object-fit: contain;
   }
   .detail-sidebar {
     width: 100%;

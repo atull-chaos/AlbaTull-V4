@@ -108,11 +108,46 @@ if (metadata?.dateTaken) {
   try { detailParts.push(String(new Date(metadata.dateTaken).getFullYear())); } catch {}
 }
 const detailsString = detailParts.length > 0 ? detailParts.join('. ') + '.' : '';
+
+// ── Detect image orientation from Sanity asset ref ──────────────
+// Asset refs look like: image-{hash}-{width}x{height}-{format}
+let orientation = 'portrait'; // default
+function getOrientation(imageObj) {
+  const ref = imageObj?.asset?._ref || '';
+  const parts = ref.split('-');
+  if (parts.length >= 3) {
+    const dims = parts[parts.length - 2]; // e.g. "2048x1365"
+    if (dims && dims.includes('x')) {
+      const [w, h] = dims.split('x').map(Number);
+      if (w && h) {
+        const ratio = w / h;
+        if (ratio > 1.2) return 'landscape';
+        if (ratio < 0.85) return 'portrait';
+        return 'square';
+      }
+    }
+  }
+  return 'portrait';
+}
+
+// Get the raw image object from cache/sanity to detect orientation
+if (source === 'cache') {
+  try {
+    const { readCache } = await import('../../lib/sanity-cache.js');
+    const cached = (readCache() || { photos: [] }).photos.find(p => p.slug === slug);
+    if (cached?.image) orientation = getOrientation(cached.image);
+  } catch {}
+} else if (source === 'sanity') {
+  try {
+    const sp = await getSanityPhotoBySlug(slug);
+    if (sp?.image) orientation = getOrientation(sp.image);
+  } catch {}
+}
 ---
 
 {isFragment && photo && (
   <Fragment>
-    <div class="detail-layout">
+    <div class={`detail-layout detail-layout--${orientation}`}>
       <div class="detail-hero">
         <img src={photo.img} alt={photo.title} data-hero-img />
       </div>
@@ -166,7 +201,7 @@ const detailsString = detailParts.length > 0 ? detailParts.join('. ') + '.' : ''
 
 {!isFragment && photo && (
   <BaseLayout title={`${photo.title} — Alba Tull`} description={photo.desc} ogImage={photo.img}>
-    <div class="detail-layout">
+    <div class={`detail-layout detail-layout--${orientation}`}>
       <div class="detail-hero">
         <img src={photo.img} alt={photo.title} data-hero-img />
       </div>

@@ -729,8 +729,7 @@ a.mosaic-cell {
   background: #f0efec;
 }
 
-.detail-hero img,
-.detail-hero canvas {
+.detail-hero img {
   width: 100%;
   height: auto;
   min-height: calc(100vh - 56px);
